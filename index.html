@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .url-example {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 15px 0;
+            border-left: 4px solid #3498db;
+        }
+        
+        .file-info {
+            background-color: #e8f4fc;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .file-info.active {
+            display: block;
+        }
+        
+        .file-display {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        .file-display img, 
+        .file-display video, 
+        .file-display audio {
+            max-width: 100%;
+            max-height: 500px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .file-display audio {
+            width: 100%;
+            max-width: 500px;
+        }
+        
+        .file-display iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+            border-radius: 4px;
+        }
+        
+        .placeholder {
+            color: #7f8c8d;
+            font-size: 18px;
+        }
+        
+        .error {
+            color: #e74c3c;
+            padding: 15px;
+            background-color: #fdf0ed;
+            border-radius: 8px;
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .file-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>File Viewer</h1>
+            <p>View files by adding <code>?grab=[file-url]</code> to this page's URL</p>
+            <div class="url-example">
+                Example: https://yoursite.com/?grab=https://example.com/image.jpg
+            </div>
+        </header>
+        
+        <div class="file-info" id="fileInfo">
+            <h3>File Information</h3>
+            <p><strong>URL:</strong> <span id="fileUrl"></span></p>
+            <p><strong>Type:</strong> <span id="fileType"></span></p>
+        </div>
+        
+        <div class="file-display" id="fileDisplay">
+            <div class="placeholder" id="placeholder">
+                No file requested. Add ?grab=[file-url] to the URL to view a file.
+            </div>
+        </div>
+        
+        <footer>
+            <p>File Viewer &copy; 2023 | Simply add ?grab=[file-url] to view files</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const fileUrl = urlParams.get('grab');
+            
+            const fileDisplay = document.getElementById('fileDisplay');
+            const placeholder = document.getElementById('placeholder');
+            const fileInfo = document.getElementById('fileInfo');
+            const fileUrlSpan = document.getElementById('fileUrl');
+            const fileTypeSpan = document.getElementById('fileType');
+            
+            if (fileUrl) {
+                // Remove the placeholder
+                placeholder.style.display = 'none';
+                
+                // Show file info
+                fileInfo.classList.add('active');
+                fileUrlSpan.textContent = fileUrl;
+                
+                // Determine file type and display accordingly
+                const fileExtension = fileUrl.split('.').pop().toLowerCase();
+                
+                // Create actions buttons
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'file-actions';
+                
+                const viewBtn = document.createElement('button');
+                viewBtn.textContent = 'Open in New Tab';
+                viewBtn.onclick = function() {
+                    window.open(fileUrl, '_blank');
+                };
+                
+                const downloadBtn = document.createElement('button');
+                downloadBtn.textContent = 'Download';
+                downloadBtn.onclick = function() {
+                    const a = document.createElement('a');
+                    a.href = fileUrl;
+                    a.download = fileUrl.split('/').pop();
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                };
+                
+                actionsDiv.appendChild(viewBtn);
+                actionsDiv.appendChild(downloadBtn);
+                
+                // Handle different file types
+                if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(fileExtension)) {
+                    fileTypeSpan.textContent = 'Image';
+                    const img = document.createElement('img');
+                    img.src = fileUrl;
+                    img.alt = 'Displayed file';
+                    img.onload = function() {
+                        fileDisplay.appendChild(img);
+                        fileDisplay.appendChild(actionsDiv);
+                    };
+                    img.onerror = function() {
+                        showError('Failed to load image');
+                    };
+                } 
+                else if (['mp4', 'webm', 'ogg'].includes(fileExtension)) {
+                    fileTypeSpan.textContent = 'Video';
+                    const video = document.createElement('video');
+                    video.controls = true;
+                    video.src = fileUrl;
+                    fileDisplay.appendChild(video);
+                    fileDisplay.appendChild(actionsDiv);
+                } 
+                else if (['mp3', 'wav', 'ogg'].includes(fileExtension)) {
+                    fileTypeSpan.textContent = 'Audio';
+                    const audio = document.createElement('audio');
+                    audio.controls = true;
+                    audio.src = fileUrl;
+                    fileDisplay.appendChild(audio);
+                    fileDisplay.appendChild(actionsDiv);
+                } 
+                else if (fileExtension === 'pdf') {
+                    fileTypeSpan.textContent = 'PDF';
+                    const iframe = document.createElement('iframe');
+                    iframe.src = fileUrl;
+                    fileDisplay.appendChild(iframe);
+                    fileDisplay.appendChild(actionsDiv);
+                } 
+                else {
+                    fileTypeSpan.textContent = 'File';
+                    // For other file types, show a link and download option
+                    const message = document.createElement('p');
+                    message.textContent = 'This file type cannot be displayed directly.';
+                    fileDisplay.appendChild(message);
+                    fileDisplay.appendChild(actionsDiv);
+                }
+            }
+            
+            function showError(message) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error';
+                errorDiv.textContent = message;
+                fileDisplay.appendChild(errorDiv);
+            }
+        });
+    </script>
+</body>
+</html>
